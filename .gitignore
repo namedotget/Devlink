@@ -5,7 +5,8 @@
 node_modules/
 package-lock.json
 
-bin/
+bin/*
+!bin/devlink.js
 dist/
 
 
