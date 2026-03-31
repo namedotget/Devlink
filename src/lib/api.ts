@@ -13,6 +13,8 @@ import type {
 
 const BASE_URL = process.env["DEVLINK_API_URL"] ?? "https://devlink.fly.dev";
 export const TASK_STATUS_FLOW: TaskStatus[] = ["todo", "wip", "review", "done"];
+const LOGIN_MAX_ATTEMPTS = 4;
+const LOGIN_RETRY_DELAY_MS = 1200;
 
 export function getNextTaskStatus(status: TaskStatus): TaskStatus | null {
   const index = TASK_STATUS_FLOW.indexOf(status);
@@ -89,22 +91,42 @@ async function apiFetch<T>(
   return res.json() as Promise<T>;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function isTransientLoginError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message;
+  return /network|fetch|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|TLS|SSL|API error 5\d{2}/i.test(
+    msg,
+  );
+}
+
 export async function login(
   username: string,
   password: string,
 ): Promise<{ token: string; user: User } | null> {
-  try {
-    return await apiFetch<{ token: string; user: User }>(
-      "/auth/login",
-      {
-        method: "POST",
-        body: JSON.stringify({ username, password }),
-      },
-      false,
-    );
-  } catch {
-    return null;
+  for (let attempt = 1; attempt <= LOGIN_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await apiFetch<{ token: string; user: User }>(
+        "/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify({ username, password }),
+        },
+        false,
+      );
+    } catch (err) {
+      if (attempt >= LOGIN_MAX_ATTEMPTS || !isTransientLoginError(err)) {
+        throw err;
+      }
+      await sleep(LOGIN_RETRY_DELAY_MS * attempt);
+    }
   }
+  return null;
 }
 
 export async function getUsers(): Promise<User[]> {
