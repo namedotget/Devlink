@@ -1,0 +1,15 @@
+.env
+
+.sfdx/
+
+node_modules/
+package-lock.json
+
+bin/*
+!bin/devlink.js
+dist/
+
+
+
+
+

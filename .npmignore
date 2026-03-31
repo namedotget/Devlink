@@ -1,0 +1,10 @@
+.env
+.env.*
+src/
+server/
+scripts/
+.sfdx/
+node_modules/
+*.log
+tsconfig.json
+NPM.md

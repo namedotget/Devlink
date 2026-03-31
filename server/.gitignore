@@ -1,0 +1,7 @@
+.env
+
+.fly/
+
+node_modules/
+
+dist/

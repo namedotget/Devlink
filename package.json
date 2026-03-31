@@ -1,0 +1,45 @@
+{
+  "name": "devlink",
+  "author": "Colin M. Foster",
+  "version": "1.0.0",
+  "description": "Manage tasks and message team members from your terminal",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "devlink": "./bin/devlink.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "tui",
+    "terminal",
+    "project-management",
+    "ink"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/index.tsx",
+    "dev": "tsx src/index.tsx",
+    "dev:watch": "tsx watch src/index.tsx",
+    "dev:server": "npm --prefix server run dev",
+    "build:server": "npm --prefix server run build"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "ink": "^4.4.1",
+    "ink-text-input": "^5.0.1",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
