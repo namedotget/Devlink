@@ -14,11 +14,194 @@ import { adminRouter } from "./routes/admin.js";
 
 const app = express();
 const PORT = Number(process.env["PORT"] ?? 3000);
+const TITLE_BANNER = `
+██████╗ ███████╗██╗   ██╗██╗     ██╗███╗   ██╗██╗  ██╗
+██╔══██╗██╔════╝██║   ██║██║     ██║████╗  ██║██║ ██╔╝
+██║  ██║█████╗  ██║   ██║██║     ██║██╔██╗ ██║█████╔╝
+██║  ██║██╔══╝  ╚██╗ ██╔╝██║     ██║██║╚██╗██║██╔═██╗
+██████╔╝███████╗ ╚████╔╝ ███████╗██║██║ ╚████║██║  ██╗
+╚═════╝ ╚══════╝  ╚═══╝  ╚══════╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝
+`.trim();
+
+function renderLandingPage(): string {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Devlink Server</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        background: #000;
+        color: #00D97E;
+        font-family: "Courier New", Courier, monospace;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .window {
+        border: 1px solid #004D2A;
+        border-radius: 6px;
+        overflow: hidden;
+        width: min(760px, calc(100vw - 32px));
+        box-shadow: 0 0 40px rgba(0, 217, 126, 0.08);
+      }
+
+      .titlebar {
+        background: #002E1A;
+        border-bottom: 1px solid #004D2A;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .dot-red   { background: #3a1010; border: 1px solid #5a1818; }
+      .dot-amber { background: #2e2200; border: 1px solid #4a3800; }
+      .dot-green { background: #004D2A; border: 1px solid #007A44; }
+
+      .titlebar-label {
+        flex: 1;
+        text-align: center;
+        font-size: 12px;
+        color: #007A44;
+        letter-spacing: 0.08em;
+        margin-right: 36px;
+      }
+
+      .body {
+        background: #000;
+        padding: 32px 24px 36px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+      }
+
+      .prompt-line {
+        align-self: flex-start;
+        font-size: 13px;
+        color: #007A44;
+        margin-bottom: 20px;
+      }
+
+      .prompt-line span { color: #00D97E; }
+
+      pre {
+        font-size: clamp(7px, 1.4vw, 13px);
+        line-height: 1.25;
+        color: #00D97E;
+        white-space: pre;
+        text-align: left;
+      }
+
+      .subtitle {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #007A44;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .divider {
+        width: 100%;
+        border: none;
+        border-top: 1px solid #004D2A;
+        margin: 28px 0;
+      }
+
+      .instructions {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .instruction-line {
+        font-size: 13px;
+        color: #00A35C;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+
+      .instruction-line .step {
+        color: #004D2A;
+        min-width: 20px;
+      }
+
+      code {
+        background: #002E1A;
+        border: 1px solid #004D2A;
+        color: #00D97E;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-family: inherit;
+        font-size: 13px;
+      }
+
+      .cursor {
+        display: inline-block;
+        width: 8px;
+        height: 14px;
+        background: #00D97E;
+        vertical-align: text-bottom;
+        animation: blink 1.1s step-end infinite;
+      }
+
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="window">
+      <div class="titlebar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-amber"></div>
+        <div class="dot dot-green"></div>
+        <span class="titlebar-label">devlink — server</span>
+      </div>
+      <div class="body">
+        <div class="prompt-line"><span>~</span> devlink server</div>
+        <pre>${TITLE_BANNER}</pre>
+        <div class="subtitle">Developer Task Dashboard</div>
+        <hr class="divider" />
+        <div class="instructions">
+          <div class="instruction-line">
+            <span class="step">1.</span>
+            <span>Make sure <code>Node.js</code> is installed on your machine.</span>
+          </div>
+          <div class="instruction-line">
+            <span class="step">2.</span>
+            <span>Run <code>npx dvlnk</code> in your terminal to launch the client.<span class="cursor"></span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`;
+}
 
 app.set("trust proxy", 1);
 app.use(helmet());
 app.use(express.json());
 app.use(globalLimiter);
+
+app.get("/", (_req, res) => {
+  res.type("html").send(renderLandingPage());
+});
 
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);
