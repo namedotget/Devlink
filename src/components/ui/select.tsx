@@ -1,5 +1,5 @@
 import { Box, Text, useInput } from "ink";
-import { FOCUS, PRIMARY, SURFACE_PANEL_ALT, TEXT_DIM, TEXT_MUTED } from "../theme.js";
+import { FOCUS, SURFACE_PANEL_ALT, TEXT_DIM, TEXT_MUTED } from "../theme.js";
 
 export interface SelectOption<T extends string = string> {
   label: string;
@@ -32,11 +32,16 @@ export function Select<T extends string>({
         onChange(options[next]!.value);
       }
     },
-    { isActive: isFocused }
+    { isActive: isFocused },
   );
 
   return (
-    <Box flexDirection="column" borderStyle="single" borderColor={SURFACE_PANEL_ALT} paddingX={1}>
+    <Box
+      flexDirection="column"
+      borderStyle="single"
+      borderColor={SURFACE_PANEL_ALT}
+      paddingX={1}
+    >
       {options.map((opt) => {
         const isSelected = opt.value === value;
         return (
@@ -45,7 +50,11 @@ export function Select<T extends string>({
               {isSelected ? "▶ " : "  "}
               {opt.label}
             </Text>
-            {!isSelected && <Text color={TEXT_DIM} dimColor> </Text>}
+            {!isSelected && (
+              <Text color={TEXT_DIM} dimColor>
+                {" "}
+              </Text>
+            )}
           </Box>
         );
       })}

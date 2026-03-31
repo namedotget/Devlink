@@ -1,7 +1,12 @@
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { useState, useEffect, useRef } from "react";
-import { getAllTasks, getTasksByAssignee, getComments, askAI } from "../../lib/api.js";
+import {
+  getAllTasks,
+  getTasksByAssignee,
+  getComments,
+  askAI,
+} from "../../lib/api.js";
 import { Loader } from "../ui/loader.js";
 import { StatusBar } from "../ui/status-bar.js";
 import {
@@ -64,13 +69,13 @@ export function AIChat({ currentUser, onBack }: AIChatProps) {
         if (currentUser.role === "manager") {
           loadedTasks = await getAllTasks();
           const nested = await Promise.all(
-            loadedTasks.slice(0, 10).map((t) => getComments(t.id))
+            loadedTasks.slice(0, 10).map((t) => getComments(t.id)),
           );
           loadedComments = nested.flat();
         } else {
           loadedTasks = await getTasksByAssignee(currentUser.id);
           const nested = await Promise.all(
-            loadedTasks.map((t) => getComments(t.id))
+            loadedTasks.map((t) => getComments(t.id)),
           );
           loadedComments = nested.flat();
         }
@@ -86,21 +91,23 @@ export function AIChat({ currentUser, onBack }: AIChatProps) {
   }, [currentUser.id, currentUser.role]);
 
   const contentLines = Math.max(4, panelHeight - 2);
-  const maxVisible = Math.max(4, Math.floor(contentLines / 2));
   const total = history.length;
-  const groupedHistoryAll = history.reduce<AIMessageGroup[]>((acc, msg, index) => {
-    const last = acc[acc.length - 1];
-    if (last && last.role === msg.role) {
-      last.content = `${last.content}\n${msg.content}`;
+  const groupedHistoryAll = history.reduce<AIMessageGroup[]>(
+    (acc, msg, index) => {
+      const last = acc[acc.length - 1];
+      if (last && last.role === msg.role) {
+        last.content = `${last.content}\n${msg.content}`;
+        return acc;
+      }
+      acc.push({
+        id: `${msg.role}-${index}`,
+        role: msg.role,
+        content: msg.content,
+      });
       return acc;
-    }
-    acc.push({
-      id: `${msg.role}-${index}`,
-      role: msg.role,
-      content: msg.content,
-    });
-    return acc;
-  }, []);
+    },
+    [],
+  );
   const maxScroll = Math.max(0, groupedHistoryAll.length - 1);
   const clampedOffset = Math.min(scrollOffset, maxScroll);
   const endGroupIdx = Math.max(0, groupedHistoryAll.length - clampedOffset);
@@ -220,8 +227,13 @@ export function AIChat({ currentUser, onBack }: AIChatProps) {
   return (
     <Box flexDirection="column" padding={1} width={columns}>
       <Box marginBottom={1} justifyContent="center">
-        <Text bold color={PRIMARY}>AI Assistant</Text>
-        <Text color={TEXT_DIM} dimColor>{" "}({tasks.length} tasks loaded)</Text>
+        <Text bold color={PRIMARY}>
+          AI Assistant
+        </Text>
+        <Text color={TEXT_DIM} dimColor>
+          {" "}
+          ({tasks.length} tasks loaded)
+        </Text>
       </Box>
 
       <Box
@@ -234,7 +246,9 @@ export function AIChat({ currentUser, onBack }: AIChatProps) {
       >
         {hasMoreAbove && (
           <Box justifyContent="center" marginBottom={1}>
-            <Text color={TEXT_DIM} dimColor>{"\u2191"} {startGroupIdx} older above</Text>
+            <Text color={TEXT_DIM} dimColor>
+              {"\u2191"} {startGroupIdx} older above
+            </Text>
           </Box>
         )}
 
@@ -248,19 +262,35 @@ export function AIChat({ currentUser, onBack }: AIChatProps) {
 
             if (isUser) {
               return (
-                <Box key={msg.id} flexDirection="column" marginTop={i > 0 ? 1 : 0} paddingRight={1}>
+                <Box
+                  key={msg.id}
+                  flexDirection="column"
+                  marginTop={i > 0 ? 1 : 0}
+                  paddingRight={1}
+                >
                   <Box justifyContent="flex-end">
-                    <Text color={TEXT_HIGHLIGHT} wrap="wrap">{msg.content}</Text>
+                    <Text color={TEXT_HIGHLIGHT} wrap="wrap">
+                      {msg.content}
+                    </Text>
                   </Box>
                 </Box>
               );
             }
 
             return (
-              <Box key={msg.id} flexDirection="column" marginTop={i > 0 ? 1 : 0} paddingLeft={1}>
-                <Text color={AI_COLOR} bold>AI</Text>
+              <Box
+                key={msg.id}
+                flexDirection="column"
+                marginTop={i > 0 ? 1 : 0}
+                paddingLeft={1}
+              >
+                <Text color={AI_COLOR} bold>
+                  AI
+                </Text>
                 <Box paddingLeft={1}>
-                  <Text color={TEXT_PRIMARY} wrap="wrap">{msg.content}</Text>
+                  <Text color={TEXT_PRIMARY} wrap="wrap">
+                    {msg.content}
+                  </Text>
                 </Box>
               </Box>
             );
@@ -269,25 +299,35 @@ export function AIChat({ currentUser, onBack }: AIChatProps) {
 
         {thinking && (
           <Box marginTop={1}>
-            <Text color={AI_COLOR} bold>AI </Text>
+            <Text color={AI_COLOR} bold>
+              AI{" "}
+            </Text>
             <Text color={TEXT_DIM}>Thinking...</Text>
           </Box>
         )}
 
         {hasMoreBelow && (
           <Box justifyContent="center" marginTop={1}>
-            <Text color={TEXT_DIM} dimColor>{"\u2193"} {clampedOffset} newer below</Text>
+            <Text color={TEXT_DIM} dimColor>
+              {"\u2193"} {clampedOffset} newer below
+            </Text>
           </Box>
         )}
       </Box>
 
-      <Box borderStyle="round" borderColor={thinking ? BORDER_SUBTLE : PRIMARY} paddingX={1}>
+      <Box
+        borderStyle="round"
+        borderColor={thinking ? BORDER_SUBTLE : PRIMARY}
+        paddingX={1}
+      >
         <Text color={DIM}>{"> "}</Text>
         <TextInput
           value={input}
           onChange={setInput}
           onSubmit={handleSend}
-          placeholder={thinking ? "Waiting for response..." : "Ask about your tasks..."}
+          placeholder={
+            thinking ? "Waiting for response..." : "Ask about your tasks..."
+          }
           focus={!thinking && !contextLoading}
         />
       </Box>

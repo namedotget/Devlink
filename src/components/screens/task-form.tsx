@@ -11,20 +11,8 @@ import {
 import { Select } from "../ui/select.js";
 import { Loader } from "../ui/loader.js";
 import { StatusBar } from "../ui/status-bar.js";
-import {
-  ACCENT_SOFT,
-  BORDER_SUBTLE,
-  ERROR,
-  FOCUS,
-  PRIMARY,
-  TEXT_MUTED,
-} from "../theme.js";
-import type {
-  User,
-  Task,
-  TaskStatus,
-  TaskPriority,
-} from "../../types/index.js";
+import { ACCENT_SOFT, BORDER_SUBTLE, FOCUS, TEXT_MUTED } from "../theme.js";
+import type { User, TaskStatus, TaskPriority } from "../../types/index.js";
 
 interface TaskFormProps {
   currentUser: User;

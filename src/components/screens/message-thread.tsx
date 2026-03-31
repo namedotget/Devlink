@@ -72,7 +72,10 @@ interface DisplayMessageGroup {
 
 // Returns the line height of one message group excluding the inter-group gap.
 // Actual body width: bubbleWidth - 2 (borders) - 2 (paddingX) - 1 (gap) - 8 (timestamp) = bubbleWidth - 13
-function estimateGroupLines(group: DisplayMessageGroup, bubbleWidth: number): number {
+function estimateGroupLines(
+  group: DisplayMessageGroup,
+  bubbleWidth: number,
+): number {
   const innerWidth = Math.max(12, bubbleWidth - 13);
   const msgLines = group.messages.reduce((sum, m) => {
     return sum + Math.max(1, Math.ceil(m.body.length / innerWidth));
@@ -190,9 +193,6 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
 
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
-  const [phoneToUsername, setPhoneToUsername] = useState<Map<string, string>>(
-    new Map(),
-  );
   const [userMeta, setUserMeta] = useState<Map<string, UserMeta>>(new Map());
   const [input, setInput] = useState("");
   const [initializing, setInitializing] = useState(true);
@@ -229,7 +229,6 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
           });
         }
 
-        setPhoneToUsername(phoneMap);
         setUserMeta(metaMap);
         phoneMapRef.current = phoneMap;
 
@@ -309,8 +308,13 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
   }, []);
   const maxScroll = Math.max(0, grouped.length - 1);
   const contentLines = Math.max(4, listHeight - 2);
-  const { groupedVisible, startGroupIdx, hasMoreAbove, hasMoreBelow, clampedOffset } =
-    computeViewport(grouped, scrollOffset, contentLines, bubbleWidth);
+  const {
+    groupedVisible,
+    startGroupIdx,
+    hasMoreAbove,
+    hasMoreBelow,
+    clampedOffset,
+  } = computeViewport(grouped, scrollOffset, contentLines, bubbleWidth);
 
   useEffect(() => {
     if (initializedAtTopRef.current) return;
@@ -480,9 +484,7 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
             const senderColor = msg.isMe
               ? myColor
               : (meta?.color ?? hashColor(msg.sender));
-            const roleLabel = msg.isMe
-              ? myMeta?.systemRole
-              : meta?.systemRole;
+            const roleLabel = msg.isMe ? myMeta?.systemRole : meta?.systemRole;
 
             if (msg.isMe) {
               return (
@@ -494,9 +496,13 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
                 >
                   <Box gap={1} marginBottom={0}>
                     {roleLabel && (
-                      <Text color={TEXT_DIM} dimColor>[{roleLabel}]</Text>
+                      <Text color={TEXT_DIM} dimColor>
+                        [{roleLabel}]
+                      </Text>
                     )}
-                    <Text color={senderColor} bold>{msg.sender}</Text>
+                    <Text color={senderColor} bold>
+                      {msg.sender}
+                    </Text>
                   </Box>
                   <Box
                     flexDirection="column"
@@ -506,10 +512,18 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
                     width={bubbleWidth}
                   >
                     {msg.messages.map((entry, idx) => (
-                      <Box key={`${msg.id}-${idx}`} justifyContent="space-between" gap={1}>
-                        <Text color={TEXT_DIM} dimColor>{entry.sentAt}</Text>
+                      <Box
+                        key={`${msg.id}-${idx}`}
+                        justifyContent="space-between"
+                        gap={1}
+                      >
+                        <Text color={TEXT_DIM} dimColor>
+                          {entry.sentAt}
+                        </Text>
                         <Box flexGrow={1} justifyContent="flex-end">
-                          <Text color={TEXT_HIGHLIGHT} wrap="wrap">{entry.body}</Text>
+                          <Text color={TEXT_HIGHLIGHT} wrap="wrap">
+                            {entry.body}
+                          </Text>
                         </Box>
                       </Box>
                     ))}
@@ -526,9 +540,13 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
                 alignItems="flex-start"
               >
                 <Box gap={1} marginBottom={0}>
-                  <Text color={senderColor} bold>{msg.sender}</Text>
+                  <Text color={senderColor} bold>
+                    {msg.sender}
+                  </Text>
                   {roleLabel && (
-                    <Text color={TEXT_DIM} dimColor>[{roleLabel}]</Text>
+                    <Text color={TEXT_DIM} dimColor>
+                      [{roleLabel}]
+                    </Text>
                   )}
                 </Box>
                 <Box
@@ -541,9 +559,13 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
                   {msg.messages.map((entry, idx) => (
                     <Box key={`${msg.id}-${idx}`} gap={1}>
                       <Box flexGrow={1}>
-                        <Text color={TEXT_PRIMARY} wrap="wrap">{entry.body}</Text>
+                        <Text color={TEXT_PRIMARY} wrap="wrap">
+                          {entry.body}
+                        </Text>
                       </Box>
-                      <Text color={TEXT_DIM} dimColor>{entry.sentAt}</Text>
+                      <Text color={TEXT_DIM} dimColor>
+                        {entry.sentAt}
+                      </Text>
                     </Box>
                   ))}
                 </Box>
