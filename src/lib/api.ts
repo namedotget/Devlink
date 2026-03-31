@@ -11,7 +11,7 @@ import type {
   ChatMessage,
 } from "../types/index.js";
 
-const BASE_URL = process.env["DEVLINK_API_URL"] ?? "https://devlink-api.fly.dev";
+const BASE_URL = process.env["DEVLINK_API_URL"] ?? "https://devlink.fly.dev";
 export const TASK_STATUS_FLOW: TaskStatus[] = ["todo", "wip", "review", "done"];
 
 export function getNextTaskStatus(status: TaskStatus): TaskStatus | null {
@@ -64,11 +64,11 @@ export function canUserTransitionTaskStatus(input: {
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
-  authenticated = true
+  authenticated = true,
 ): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> ?? {}),
+    ...((options.headers as Record<string, string>) ?? {}),
   };
 
   if (authenticated) {
@@ -79,7 +79,9 @@ async function apiFetch<T>(
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: res.statusText })) as { error?: string };
+    const body = (await res
+      .json()
+      .catch(() => ({ error: res.statusText }))) as { error?: string };
     throw new Error(body.error ?? `API error ${res.status}`);
   }
 
@@ -87,12 +89,19 @@ async function apiFetch<T>(
   return res.json() as Promise<T>;
 }
 
-export async function login(username: string, password: string): Promise<{ token: string; user: User } | null> {
+export async function login(
+  username: string,
+  password: string,
+): Promise<{ token: string; user: User } | null> {
   try {
-    return await apiFetch<{ token: string; user: User }>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-    }, false);
+    return await apiFetch<{ token: string; user: User }>(
+      "/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({ username, password }),
+      },
+      false,
+    );
   } catch {
     return null;
   }
@@ -114,21 +123,30 @@ export async function getUserById(id: number): Promise<User | null> {
   }
 }
 
-export async function updateUserPhone(userId: number, phone: string | null): Promise<User> {
+export async function updateUserPhone(
+  userId: number,
+  phone: string | null,
+): Promise<User> {
   return apiFetch<User>(`/users/${userId}`, {
     method: "PATCH",
     body: JSON.stringify({ phone }),
   });
 }
 
-export async function updateUserChatColor(userId: number, color: string | null): Promise<User> {
+export async function updateUserChatColor(
+  userId: number,
+  color: string | null,
+): Promise<User> {
   return apiFetch<User>(`/users/${userId}`, {
     method: "PATCH",
     body: JSON.stringify({ chat_color: color }),
   });
 }
 
-export async function updateUserRole(userId: number, role: Role): Promise<User> {
+export async function updateUserRole(
+  userId: number,
+  role: Role,
+): Promise<User> {
   return apiFetch<User>(`/users/${userId}`, {
     method: "PATCH",
     body: JSON.stringify({ role }),
@@ -144,7 +162,7 @@ export async function createUser(
   email: string,
   password: string,
   role: Role,
-  phone?: string
+  phone?: string,
 ): Promise<User> {
   return apiFetch<User>("/users", {
     method: "POST",
@@ -191,7 +209,7 @@ export async function updateTask(
     priority: TaskPriority;
     assigned_to: number | null;
   },
-  _actorUserId: number
+  _actorUserId: number,
 ): Promise<Task> {
   return apiFetch<Task>(`/tasks/${id}`, {
     method: "PATCH",
@@ -208,19 +226,32 @@ export function canAssignTasks(user: User): boolean {
   return (user.custom_roles ?? []).some((r) => r.can_assign_tasks);
 }
 
-export async function getComments(taskId: number, _currentUserId?: number): Promise<Comment[]> {
+export async function getComments(
+  taskId: number,
+  _currentUserId?: number,
+): Promise<Comment[]> {
   return apiFetch<Comment[]>(`/tasks/${taskId}/comments`);
 }
 
-export async function addComment(taskId: number, _userId: number, content: string): Promise<Comment> {
+export async function addComment(
+  taskId: number,
+  _userId: number,
+  content: string,
+): Promise<Comment> {
   return apiFetch<Comment>(`/tasks/${taskId}/comments`, {
     method: "POST",
     body: JSON.stringify({ content }),
   });
 }
 
-export async function toggleCommentLike(commentId: number, _userId: number): Promise<boolean> {
-  const result = await apiFetch<{ liked: boolean }>(`/comments/${commentId}/like`, { method: "POST" });
+export async function toggleCommentLike(
+  commentId: number,
+  _userId: number,
+): Promise<boolean> {
+  const result = await apiFetch<{ liked: boolean }>(
+    `/comments/${commentId}/like`,
+    { method: "POST" },
+  );
   return result.liked;
 }
 
@@ -228,7 +259,11 @@ export async function getRoles(): Promise<CustomRole[]> {
   return apiFetch<CustomRole[]>("/roles");
 }
 
-export async function createRole(name: string, color: string, canAssignTasks: boolean): Promise<CustomRole> {
+export async function createRole(
+  name: string,
+  color: string,
+  canAssignTasks: boolean,
+): Promise<CustomRole> {
   return apiFetch<CustomRole>("/roles", {
     method: "POST",
     body: JSON.stringify({ name, color, can_assign_tasks: canAssignTasks }),
@@ -237,7 +272,7 @@ export async function createRole(name: string, color: string, canAssignTasks: bo
 
 export async function updateRole(
   id: number,
-  patch: { name?: string; color?: string; can_assign_tasks?: boolean }
+  patch: { name?: string; color?: string; can_assign_tasks?: boolean },
 ): Promise<void> {
   return apiFetch<void>(`/roles/${id}`, {
     method: "PATCH",
@@ -253,16 +288,29 @@ export async function getUserRoles(userId: number): Promise<CustomRole[]> {
   return apiFetch<CustomRole[]>(`/users/${userId}/roles`);
 }
 
-export async function assignRole(userId: number, roleId: number): Promise<void> {
+export async function assignRole(
+  userId: number,
+  roleId: number,
+): Promise<void> {
   return apiFetch<void>(`/users/${userId}/roles/${roleId}`, { method: "POST" });
 }
 
-export async function removeRole(userId: number, roleId: number): Promise<void> {
-  return apiFetch<void>(`/users/${userId}/roles/${roleId}`, { method: "DELETE" });
+export async function removeRole(
+  userId: number,
+  roleId: number,
+): Promise<void> {
+  return apiFetch<void>(`/users/${userId}/roles/${roleId}`, {
+    method: "DELETE",
+  });
 }
 
-export async function getTeamChatMessages(): Promise<{ chatId: string; messages: LinqMessage[] }> {
-  return apiFetch<{ chatId: string; messages: LinqMessage[] }>("/linq/team-chat/messages");
+export async function getTeamChatMessages(): Promise<{
+  chatId: string;
+  messages: LinqMessage[];
+}> {
+  return apiFetch<{ chatId: string; messages: LinqMessage[] }>(
+    "/linq/team-chat/messages",
+  );
 }
 
 export async function sendTeamMessage(text: string): Promise<void> {
@@ -285,7 +333,7 @@ export async function askAI(
   _user: User,
   _tasks: Task[],
   _comments: Comment[],
-  _teamMembers: User[] = []
+  _teamMembers: User[] = [],
 ): Promise<string> {
   const result = await apiFetch<{ reply: string }>("/ai/chat", {
     method: "POST",
@@ -298,10 +346,16 @@ export async function getAISummary(
   _user: User,
   _tasks: Task[],
   _comments: Comment[],
-  _teamMembers: User[] = []
+  _teamMembers: User[] = [],
 ): Promise<string> {
-  const result = await apiFetch<{ summary: string }>("/ai/summary", { method: "POST" });
+  const result = await apiFetch<{ summary: string }>("/ai/summary", {
+    method: "POST",
+  });
   return result.summary;
 }
 
-export { parseSender, formatOutgoing, isTeamChatBootstrapMessage } from "./linq-utils.js";
+export {
+  parseSender,
+  formatOutgoing,
+  isTeamChatBootstrapMessage,
+} from "./linq-utils.js";
