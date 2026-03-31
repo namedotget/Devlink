@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { getUsers, getDevs, getUserById } from "../lib/users.js";
 import { createUser, updateUserPhone, updateUserChatColor, updateUserRole, deleteUser } from "../lib/auth.js";
-import { assignRole, removeRole, getUserRoles } from "../lib/roles.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import type { Role } from "../types.js";
 
@@ -72,6 +71,10 @@ usersRouter.patch("/:id", async (req: AuthRequest, res) => {
       res.status(403).json({ error: "Only managers can change roles" });
       return;
     }
+    if (!["dev", "lead", "manager"].includes(role)) {
+      res.status(400).json({ error: "role must be dev, lead, or manager" });
+      return;
+    }
     await updateUserRole(id, role);
   }
 
@@ -87,36 +90,5 @@ usersRouter.delete("/:id", async (req: AuthRequest, res) => {
   const id = parseInt(req.params["id"]!, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   await deleteUser(id);
-  res.status(204).end();
-});
-
-usersRouter.get("/:userId/roles", async (req, res) => {
-  const userId = parseInt(req.params["userId"]!, 10);
-  if (isNaN(userId)) { res.status(400).json({ error: "Invalid userId" }); return; }
-  const roles = await getUserRoles(userId);
-  res.json(roles);
-});
-
-usersRouter.post("/:userId/roles/:roleId", async (req: AuthRequest, res) => {
-  if (req.userRole !== "manager") {
-    res.status(403).json({ error: "Only managers can assign roles" });
-    return;
-  }
-  const userId = parseInt(req.params["userId"]!, 10);
-  const roleId = parseInt(req.params["roleId"]!, 10);
-  if (isNaN(userId) || isNaN(roleId)) { res.status(400).json({ error: "Invalid params" }); return; }
-  await assignRole(userId, roleId);
-  res.status(204).end();
-});
-
-usersRouter.delete("/:userId/roles/:roleId", async (req: AuthRequest, res) => {
-  if (req.userRole !== "manager") {
-    res.status(403).json({ error: "Only managers can remove roles" });
-    return;
-  }
-  const userId = parseInt(req.params["userId"]!, 10);
-  const roleId = parseInt(req.params["roleId"]!, 10);
-  if (isNaN(userId) || isNaN(roleId)) { res.status(400).json({ error: "Invalid params" }); return; }
-  await removeRole(userId, roleId);
   res.status(204).end();
 });

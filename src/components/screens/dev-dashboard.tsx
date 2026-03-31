@@ -158,7 +158,6 @@ export function DevDashboard({
   const isLead = currentUser.role === "lead";
   const roleColor = ROLE_COLORS[currentUser.role] ?? PRIMARY;
   const userColor = currentUser.chat_color ?? PRIMARY;
-  const customRoles = currentUser.custom_roles ?? [];
 
   if (loading) return <Loader label="Loading your tasks..." />;
 
@@ -170,11 +169,6 @@ export function DevDashboard({
             {isLead ? "Lead Dashboard" : "Dev Dashboard"}
           </Text>
           <Text color={roleColor}>[{currentUser.role}]</Text>
-          {customRoles.map((r) => (
-            <Text key={r.id} color={r.color}>
-              [{r.name}]
-            </Text>
-          ))}
         </Box>
         <Text color={TEXT_MUTED}>
           Welcome,{" "}

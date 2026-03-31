@@ -3,7 +3,6 @@ import type {
   User,
   Task,
   Comment,
-  CustomRole,
   Role,
   TaskStatus,
   TaskPriority,
@@ -244,8 +243,7 @@ export async function deleteTask(id: number): Promise<void> {
 }
 
 export function canAssignTasks(user: User): boolean {
-  if (user.role === "manager" || user.role === "lead") return true;
-  return (user.custom_roles ?? []).some((r) => r.can_assign_tasks);
+  return user.role === "manager" || user.role === "lead";
 }
 
 export async function getComments(
@@ -275,55 +273,6 @@ export async function toggleCommentLike(
     { method: "POST" },
   );
   return result.liked;
-}
-
-export async function getRoles(): Promise<CustomRole[]> {
-  return apiFetch<CustomRole[]>("/roles");
-}
-
-export async function createRole(
-  name: string,
-  color: string,
-  canAssignTasks: boolean,
-): Promise<CustomRole> {
-  return apiFetch<CustomRole>("/roles", {
-    method: "POST",
-    body: JSON.stringify({ name, color, can_assign_tasks: canAssignTasks }),
-  });
-}
-
-export async function updateRole(
-  id: number,
-  patch: { name?: string; color?: string; can_assign_tasks?: boolean },
-): Promise<void> {
-  return apiFetch<void>(`/roles/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(patch),
-  });
-}
-
-export async function deleteRole(id: number): Promise<void> {
-  return apiFetch<void>(`/roles/${id}`, { method: "DELETE" });
-}
-
-export async function getUserRoles(userId: number): Promise<CustomRole[]> {
-  return apiFetch<CustomRole[]>(`/users/${userId}/roles`);
-}
-
-export async function assignRole(
-  userId: number,
-  roleId: number,
-): Promise<void> {
-  return apiFetch<void>(`/users/${userId}/roles/${roleId}`, { method: "POST" });
-}
-
-export async function removeRole(
-  userId: number,
-  roleId: number,
-): Promise<void> {
-  return apiFetch<void>(`/users/${userId}/roles/${roleId}`, {
-    method: "DELETE",
-  });
 }
 
 export async function getTeamChatMessages(): Promise<{

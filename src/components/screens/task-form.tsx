@@ -11,7 +11,7 @@ import {
 import { Select } from "../ui/select.js";
 import { Loader } from "../ui/loader.js";
 import { StatusBar } from "../ui/status-bar.js";
-import { ACCENT_SOFT, BORDER_SUBTLE, FOCUS, TEXT_MUTED } from "../theme.js";
+import { BORDER_SUBTLE, BORDER_STRONG, FOCUS, TEXT_DIM } from "../theme.js";
 import type { User, TaskStatus, TaskPriority } from "../../types/index.js";
 
 interface TaskFormProps {
@@ -159,9 +159,16 @@ export function TaskForm({
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Box marginBottom={1}>
+      <Box
+        marginBottom={1}
+        flexDirection="row"
+        justifyContent="space-between"
+      >
         <Text bold color={FOCUS}>
-          {isEditing ? "Edit Task" : "New Task"}
+          {isEditing ? "EDIT TASK" : "NEW TASK"}
+        </Text>
+        <Text color={TEXT_DIM}>
+          {fieldIndex + 1} / {FIELDS.length}
         </Text>
       </Box>
 
@@ -169,8 +176,8 @@ export function TaskForm({
         flexDirection="column"
         borderStyle="round"
         borderColor={BORDER_SUBTLE}
-        padding={1}
-        gap={1}
+        paddingX={1}
+        paddingY={1}
       >
         <FieldRow label="Title" active={currentField === "title"}>
           <TextInput
@@ -181,6 +188,8 @@ export function TaskForm({
           />
         </FieldRow>
 
+        <Box borderStyle="single" borderColor={BORDER_SUBTLE} borderTop={false} borderLeft={false} borderRight={false} />
+
         <FieldRow label="Description" active={currentField === "description"}>
           <TextInput
             value={description}
@@ -190,6 +199,8 @@ export function TaskForm({
           />
         </FieldRow>
 
+        <Box borderStyle="single" borderColor={BORDER_SUBTLE} borderTop={false} borderLeft={false} borderRight={false} />
+
         <FieldRow label="Status" active={currentField === "status"}>
           <Select
             options={STATUS_OPTIONS}
@@ -198,6 +209,8 @@ export function TaskForm({
             isFocused={currentField === "status"}
           />
         </FieldRow>
+
+        <Box borderStyle="single" borderColor={BORDER_SUBTLE} borderTop={false} borderLeft={false} borderRight={false} />
 
         <FieldRow label="Priority" active={currentField === "priority"}>
           <Select
@@ -209,14 +222,17 @@ export function TaskForm({
         </FieldRow>
 
         {canAssign && (
-          <FieldRow label="Assign To" active={currentField === "assignee"}>
-            <Select
-              options={assigneeOptions}
-              value={assigneeValue}
-              onChange={(v) => setAssigneeId(v === "null" ? null : Number(v))}
-              isFocused={currentField === "assignee"}
-            />
-          </FieldRow>
+          <>
+            <Box borderStyle="single" borderColor={BORDER_SUBTLE} borderTop={false} borderLeft={false} borderRight={false} />
+            <FieldRow label="Assign To" active={currentField === "assignee"}>
+              <Select
+                options={assigneeOptions}
+                value={assigneeValue}
+                onChange={(v) => setAssigneeId(v === "null" ? null : Number(v))}
+                isFocused={currentField === "assignee"}
+              />
+            </FieldRow>
+          </>
         )}
       </Box>
 
@@ -244,13 +260,15 @@ function FieldRow({
   children: React.ReactNode;
 }) {
   return (
-    <Box flexDirection="column">
-      <Text color={active ? FOCUS : TEXT_MUTED} bold={active}>
-        {label}
-      </Text>
-      <Box marginLeft={1}>
-        <Text color={ACCENT_SOFT}>› </Text>
-        {children}
+    <Box flexDirection="row" paddingY={0}>
+      <Text color={active ? FOCUS : BORDER_STRONG}>{active ? "▌ " : "  "}</Text>
+      <Box flexDirection="column" flexGrow={1}>
+        <Text color={active ? FOCUS : TEXT_DIM} bold={active}>
+          {label.toUpperCase()}
+        </Text>
+        <Box marginLeft={1}>
+          {children}
+        </Box>
       </Box>
     </Box>
   );

@@ -4,8 +4,7 @@ import { canUserTransitionTaskStatus } from "./task-status.js";
 import { getUserById } from "./users.js";
 
 export function canAssignTasks(user: User): boolean {
-  if (user.role === "manager" || user.role === "lead") return true;
-  return (user.custom_roles ?? []).some((r) => r.can_assign_tasks);
+  return user.role === "manager" || user.role === "lead";
 }
 
 function rowToTask(row: Record<string, unknown>): Task {

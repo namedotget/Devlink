@@ -35,11 +35,17 @@ export function Select<T extends string>({
     { isActive: isFocused },
   );
 
+  const selectedLabel = options[currentIndex]?.label ?? value;
+
+  if (!isFocused) {
+    return <Text color={TEXT_MUTED}>{selectedLabel}</Text>;
+  }
+
   return (
     <Box
       flexDirection="column"
       borderStyle="single"
-      borderColor={SURFACE_PANEL_ALT}
+      borderColor={FOCUS}
       paddingX={1}
     >
       {options.map((opt) => {
@@ -50,11 +56,6 @@ export function Select<T extends string>({
               {isSelected ? "▶ " : "  "}
               {opt.label}
             </Text>
-            {!isSelected && (
-              <Text color={TEXT_DIM} dimColor>
-                {" "}
-              </Text>
-            )}
           </Box>
         );
       })}

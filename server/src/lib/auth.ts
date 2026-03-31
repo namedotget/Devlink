@@ -2,22 +2,6 @@ import bcrypt from "bcryptjs";
 import { sql } from "./db.js";
 import type { User, Role } from "../types.js";
 
-const ROLE_NAME_MAP: Record<Role, string> = {
-  dev: "Dev",
-  lead: "Lead",
-  manager: "Manager",
-};
-
-async function syncSystemRole(userId: number, role: Role): Promise<void> {
-  const roleName = ROLE_NAME_MAP[role];
-  const rows = await sql`SELECT id FROM roles WHERE name = ${roleName} AND is_system = true LIMIT 1`;
-  if (rows.length === 0) return;
-  const roleId = rows[0]!["id"] as number;
-
-  await sql`DELETE FROM user_roles WHERE user_id = ${userId} AND role_id IN (SELECT id FROM roles WHERE is_system = true)`;
-  await sql`INSERT INTO user_roles (user_id, role_id) VALUES (${userId}, ${roleId}) ON CONFLICT DO NOTHING`;
-}
-
 function rowToUser(row: Record<string, unknown>): User {
   return {
     id: row["id"] as number,
@@ -65,9 +49,7 @@ export async function createUser(
     VALUES (${username}, ${email}, ${hash}, ${role}, ${phone ?? null})
     RETURNING id, username, email, role, phone, chat_color, created_at
   `;
-  const user = rowToUser(rows[0]);
-  await syncSystemRole(user.id, role);
-  return user;
+  return rowToUser(rows[0]);
 }
 
 export async function updateUserPhone(userId: number, phone: string | null): Promise<void> {
@@ -80,11 +62,9 @@ export async function updateUserChatColor(userId: number, color: string | null):
 
 export async function updateUserRole(userId: number, role: Role): Promise<void> {
   await sql`UPDATE users SET role = ${role} WHERE id = ${userId}`;
-  await syncSystemRole(userId, role);
 }
 
 export async function deleteUser(userId: number): Promise<void> {
-  await sql`DELETE FROM user_roles WHERE user_id = ${userId}`;
   await sql`DELETE FROM comments WHERE user_id = ${userId}`;
   await sql`DELETE FROM linq_chats WHERE from_user_id = ${userId} OR to_user_id = ${userId}`;
   await sql`DELETE FROM tasks WHERE created_by = ${userId}`;

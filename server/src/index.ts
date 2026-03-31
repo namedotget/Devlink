@@ -7,7 +7,6 @@ import { authRouter } from "./routes/auth.js";
 import { usersRouter } from "./routes/users.js";
 import { tasksRouter } from "./routes/tasks.js";
 import { commentsRouter } from "./routes/comments.js";
-import { rolesRouter } from "./routes/roles.js";
 import { linqRouter } from "./routes/linq.js";
 import { aiRouter } from "./routes/ai.js";
 import { adminRouter } from "./routes/admin.js";
@@ -59,7 +58,7 @@ function renderLandingPage(): string {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Devlink Server" />
     <meta name="twitter:description" content="Manage tasks and message team members from your terminal" />
-    
+
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2300D97E'/></svg>" />
     <title>Devlink Server</title>
     <style>
@@ -239,7 +238,6 @@ app.use("/auth", authRouter);
 app.use("/users", usersRouter);
 app.use("/tasks", tasksRouter);
 app.use("/", commentsRouter);
-app.use("/roles", rolesRouter);
 app.use("/linq", linqRouter);
 app.use("/ai", aiRouter);
 app.use("/admin", adminRouter);

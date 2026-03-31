@@ -6,7 +6,6 @@ import { DevDashboard } from "./components/screens/dev-dashboard.js";
 import { TaskDetail } from "./components/screens/task-detail.js";
 import { TaskForm } from "./components/screens/task-form.js";
 import { TeamManagement } from "./components/screens/team-management.js";
-import { RoleManagement } from "./components/screens/role-management.js";
 import { Settings } from "./components/screens/settings.js";
 import { MessageThread } from "./components/screens/message-thread.js";
 import { canAssignTasks } from "./lib/api.js";
@@ -150,14 +149,6 @@ export function App() {
     return (
       <TeamManagement
         onBack={() => navigate("manager-dashboard")}
-      />
-    );
-  }
-
-  if (screen === "role-management" && currentUser.role === "manager") {
-    return (
-      <RoleManagement
-        onBack={() => navigate("team-management")}
       />
     );
   }

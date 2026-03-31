@@ -74,32 +74,4 @@ export async function ensureSchema(): Promise<void> {
       UNIQUE(from_user_id, to_user_id)
     )
   `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS roles (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(64) UNIQUE NOT NULL,
-      color TEXT NOT NULL DEFAULT '#FFFFFF',
-      can_assign_tasks BOOLEAN NOT NULL DEFAULT FALSE,
-      is_system BOOLEAN NOT NULL DEFAULT FALSE,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS user_roles (
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-      PRIMARY KEY (user_id, role_id)
-    )
-  `;
-
-  await sql`
-    INSERT INTO roles (name, color, can_assign_tasks, is_system)
-    VALUES
-      ('Manager', '#00D97E', true, true),
-      ('Lead', '#FFB347', true, true),
-      ('Dev', '#87CEEB', false, true)
-    ON CONFLICT (name) DO NOTHING
-  `;
 }

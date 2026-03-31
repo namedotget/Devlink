@@ -2,14 +2,6 @@ export type Role = "dev" | "lead" | "manager";
 export type TaskStatus = "todo" | "wip" | "review" | "done";
 export type TaskPriority = "low" | "medium" | "high";
 
-export interface CustomRole {
-  id: number;
-  name: string;
-  color: string;
-  can_assign_tasks: boolean;
-  is_system: boolean;
-}
-
 export interface User {
   id: number;
   username: string;
@@ -17,7 +9,6 @@ export interface User {
   role: Role;
   phone?: string | null;
   chat_color?: string | null;
-  custom_roles?: CustomRole[];
   created_at: string;
 }
 

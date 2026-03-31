@@ -1,13 +1,7 @@
 import type { User } from "../types/index.js";
 
-function roleSegment(user: User): string {
-  const extras = (user.custom_roles ?? []).map((r) => r.name).filter(Boolean);
-  if (extras.length === 0) return user.role;
-  return `${user.role} · ${extras.join(" · ")}`;
-}
-
 export function formatOutgoing(user: User, text: string): string {
-  const who = `${user.username} · ${roleSegment(user)}`;
+  const who = `${user.username} · ${user.role}`;
   return `[${who}]: ${text}`;
 }
 

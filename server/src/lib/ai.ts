@@ -6,8 +6,7 @@ const groq = new Groq({
 });
 
 function userRoleSummary(user: User): string {
-  const badges = [user.role, ...(user.custom_roles ?? []).map((r) => r.name)];
-  return `${user.username} [${badges.join(", ")}]`;
+  return `${user.username} [${user.role}]`;
 }
 
 function buildManagerPrompt(user: User, tasks: Task[], teamMembers: User[]): string {
@@ -76,7 +75,7 @@ function buildDevPrompt(user: User, tasks: Task[], comments: Comment[]): string 
     .map((c) => `- ${c.username}: ${c.content}`)
     .join("\n");
 
-  const roleLabels = [user.role, ...(user.custom_roles ?? []).map((r) => r.name)].join(", ");
+  const roleLabels = user.role;
 
   return `You are an AI assistant for ${user.username}, a software developer (${roleLabels}).
 
@@ -127,7 +126,7 @@ function buildSystemPrompt(user: User, tasks: Task[], comments: Comment[], teamM
     .join("\n");
 
   const roleLabel = user.role === "manager" ? "project manager" : user.role === "lead" ? "lead developer" : "software developer";
-  const userRoles = [user.role, ...(user.custom_roles ?? []).map((r) => r.name)].join(", ");
+  const userRoles = user.role;
 
   const teamRoster = teamMembers
     .filter((m) => m.id !== user.id)

@@ -22,15 +22,14 @@ import {
   BORDER_SUBTLE,
 } from "../theme.js";
 import { useTerminalSize, chatPanelHeight } from "../../lib/terminal-size.js";
-import type { User, LinqMessage, CustomRole } from "../../types/index.js";
+import type { User, LinqMessage } from "../../types/index.js";
 
 const POLL_INTERVAL_MS = 5000;
 const CHROME_LINES = 14;
 
 interface UserMeta {
   color: string;
-  systemRole: string;
-  customRoles: CustomRole[];
+  role: string;
 }
 
 function maskPhone(phone: string): string {
@@ -224,8 +223,7 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
           }
           metaMap.set(u.username, {
             color: u.chat_color ?? hashColor(u.username),
-            systemRole: u.role,
-            customRoles: u.custom_roles ?? [],
+            role: u.role,
           });
         }
 
@@ -234,14 +232,7 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
 
         const enriched = allUsers.find((u) => u.id === currentUser.id);
         senderProfileRef.current = enriched
-          ? {
-              ...enriched,
-              ...currentUser,
-              custom_roles:
-                currentUser.custom_roles && currentUser.custom_roles.length > 0
-                  ? currentUser.custom_roles
-                  : (enriched.custom_roles ?? []),
-            }
+          ? { ...enriched, ...currentUser }
           : currentUser;
 
         const { chatId: id, messages: raw } = await getTeamChatMessages();
@@ -484,7 +475,7 @@ export function MessageThread({ currentUser, onBack }: MessageThreadProps) {
             const senderColor = msg.isMe
               ? myColor
               : (meta?.color ?? hashColor(msg.sender));
-            const roleLabel = msg.isMe ? myMeta?.systemRole : meta?.systemRole;
+            const roleLabel = msg.isMe ? myMeta?.role : meta?.role;
 
             if (msg.isMe) {
               return (

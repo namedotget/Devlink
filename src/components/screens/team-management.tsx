@@ -1,11 +1,13 @@
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { useState, useEffect } from "react";
-import { getUsers, createUser, deleteUser, updateUserChatColor, getRoles, assignRole, removeRole } from "../../lib/api.js";
+import { getUsers, createUser, deleteUser, updateUserChatColor, updateUserRole } from "../../lib/api.js";
 import { Loader } from "../ui/loader.js";
 import { StatusBar } from "../ui/status-bar.js";
 import { BORDER_SUBTLE, CHAT_COLORS, DIM, ERROR, FOCUS, PRIMARY, ROLE_COLORS, TEXT_DIM, TEXT_MUTED } from "../theme.js";
-import type { User, CustomRole } from "../../types/index.js";
+import type { User, Role } from "../../types/index.js";
+
+const ROLES: Role[] = ["dev", "lead", "manager"];
 
 function maskPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -27,13 +29,13 @@ const COLOR_COLS = 4;
 type SubMode =
   | "list"
   | "create"
+  | "createRole"
   | "confirmDelete"
   | "pickColor"
-  | "assignRoles";
+  | "changeRole";
 
 export function TeamManagement({ onBack }: TeamManagementProps) {
   const [users, setUsers] = useState<User[]>([]);
-  const [allRoles, setAllRoles] = useState<CustomRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [cursor, setCursor] = useState(0);
   const [mode, setMode] = useState<SubMode>("list");
@@ -46,17 +48,16 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newRoleCursor, setNewRoleCursor] = useState(0);
 
   const [colorCursor, setColorCursor] = useState(0);
-
-  const [roleCursor, setRoleCursor] = useState(0);
+  const [changeRoleCursor, setChangeRoleCursor] = useState(0);
 
   async function load() {
     setLoading(true);
     try {
-      const [userData, roleData] = await Promise.all([getUsers(), getRoles()]);
+      const userData = await getUsers();
       setUsers(userData);
-      setAllRoles(roleData);
       setCursor((c) => Math.min(c, Math.max(0, userData.length - 1)));
     } catch {
       setError("Failed to load team.");
@@ -85,10 +86,21 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
         if (key.tab || key.return) {
           const currentIdx = FORM_FIELDS.indexOf(formField);
           if (key.return && formField === "phone") {
-            await handleCreate();
+            setMode("createRole");
             return;
           }
           setFormField(FORM_FIELDS[(currentIdx + 1) % FORM_FIELDS.length]!);
+          return;
+        }
+        return;
+      }
+
+      if (mode === "createRole") {
+        if (key.escape) { setMode("create"); return; }
+        if (key.upArrow) { setNewRoleCursor((c) => Math.max(0, c - 1)); return; }
+        if (key.downArrow) { setNewRoleCursor((c) => Math.min(ROLES.length - 1, c + 1)); return; }
+        if (key.return) {
+          await handleCreate();
           return;
         }
         return;
@@ -136,23 +148,16 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
         return;
       }
 
-      if (mode === "assignRoles") {
+      if (mode === "changeRole") {
         if (key.escape) { setMode("list"); return; }
-        if (key.upArrow) { setRoleCursor((c) => Math.max(0, c - 1)); return; }
-        if (key.downArrow) { setRoleCursor((c) => Math.min(allRoles.length - 1, c + 1)); return; }
+        if (key.upArrow) { setChangeRoleCursor((c) => Math.max(0, c - 1)); return; }
+        if (key.downArrow) { setChangeRoleCursor((c) => Math.min(ROLES.length - 1, c + 1)); return; }
         if (key.return && selectedUser) {
-          const role = allRoles[roleCursor];
-          if (!role) return;
-          const hasRole = (selectedUser.custom_roles ?? []).some((r) => r.id === role.id);
+          const role = ROLES[changeRoleCursor]!;
           setSaving(true);
           try {
-            if (hasRole) {
-              await removeRole(selectedUser.id, role.id);
-              setMessage(`Removed [${role.name}] from ${selectedUser.username}.`);
-            } else {
-              await assignRole(selectedUser.id, role.id);
-              setMessage(`Assigned [${role.name}] to ${selectedUser.username}.`);
-            }
+            await updateUserRole(selectedUser.id, role);
+            setMessage(`Role updated to [${role}] for ${selectedUser.username}.`);
             await load();
           } catch {
             setError("Failed to update role.");
@@ -180,9 +185,10 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
         setMode("pickColor");
         return;
       }
-      if (input === "x" && selectedUser) {
-        setRoleCursor(0);
-        setMode("assignRoles");
+      if (input === "r" && selectedUser) {
+        const currentIdx = ROLES.indexOf(selectedUser.role);
+        setChangeRoleCursor(currentIdx >= 0 ? currentIdx : 0);
+        setMode("changeRole");
         return;
       }
     },
@@ -194,6 +200,7 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
     setNewEmail("");
     setNewPassword("");
     setNewPhone("");
+    setNewRoleCursor(0);
     setFormField("username");
   }
 
@@ -207,10 +214,11 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
       setError("Phone must be E.164 format, e.g. +12223334444");
       return;
     }
+    const role = ROLES[newRoleCursor]!;
     setSaving(true);
     try {
-      await createUser(newUsername.trim(), newEmail.trim(), newPassword.trim(), "dev", phone);
-      setMessage(`Dev "${newUsername}" created.`);
+      await createUser(newUsername.trim(), newEmail.trim(), newPassword.trim(), role, phone);
+      setMessage(`User "${newUsername}" created as [${role}].`);
       resetForm();
       setMode("list");
       await load();
@@ -267,27 +275,24 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
         </Box>
       )}
 
-      {mode === "assignRoles" && selectedUser && (
+      {mode === "changeRole" && selectedUser && (
         <Box flexDirection="column" borderStyle="round" borderColor={BORDER_SUBTLE} padding={1} marginBottom={1}>
           <Box marginBottom={1}>
-            <Text bold color={PRIMARY}>
-              Roles for {selectedUser.username}  (Enter to toggle)
-            </Text>
+            <Text bold color={PRIMARY}>Change role for {selectedUser.username}</Text>
           </Box>
-          {allRoles.map((role, i) => {
-            const hasRole = (selectedUser.custom_roles ?? []).some((r) => r.id === role.id);
-            const isSelected = i === roleCursor;
+          {ROLES.map((role, i) => {
+            const isSelected = i === changeRoleCursor;
+            const isCurrent = role === selectedUser.role;
             return (
-              <Box key={role.id} gap={2}>
+              <Box key={role} gap={2}>
                 <Text color={isSelected ? FOCUS : TEXT_MUTED} bold={isSelected}>{isSelected ? "▶" : " "}</Text>
-                <Text color={hasRole ? role.color : TEXT_MUTED} bold={hasRole}>[{role.name}]</Text>
-                <Text color={TEXT_DIM} dimColor>{hasRole ? "assigned" : "not assigned"}</Text>
-                {role.can_assign_tasks && <Text color={TEXT_DIM} dimColor>can assign tasks</Text>}
+                <Text color={ROLE_COLORS[role] ?? PRIMARY} bold={isSelected}>[{role}]</Text>
+                {isCurrent && <Text color={TEXT_DIM} dimColor>current</Text>}
               </Box>
             );
           })}
           <Box marginTop={1}>
-            <Text color={TEXT_DIM} dimColor>[↑↓] navigate  [Enter] toggle  [Esc] back</Text>
+            <Text color={TEXT_DIM} dimColor>[↑↓] navigate  [Enter] confirm  [Esc] cancel</Text>
           </Box>
         </Box>
       )}
@@ -300,21 +305,17 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
             const isSelected = i === cursor;
             const roleColor = ROLE_COLORS[user.role] ?? TEXT_MUTED;
             const chatColor = user.chat_color ?? PRIMARY;
-            const customRoles = user.custom_roles ?? [];
             return (
               <Box key={user.id} gap={1} flexWrap="wrap">
                 <Text color={isSelected ? FOCUS : TEXT_MUTED} bold={isSelected}>{isSelected ? "▶" : " "}</Text>
                 <Text color={chatColor} bold={isSelected}>●</Text>
                 <Text color={isSelected ? PRIMARY : TEXT_MUTED} bold={isSelected}>{user.username}</Text>
                 <Text color={roleColor}>[{user.role}]</Text>
-                {customRoles.map((r) => (
-                  <Text key={r.id} color={r.color}>[{r.name}]</Text>
-                ))}
                 <Text color={DIM}>{user.email}</Text>
                 {user.phone ? (
                   <Text color={DIM}>{maskPhone(user.phone)}</Text>
                 ) : (
-                <Text color={TEXT_DIM} dimColor>no phone</Text>
+                  <Text color={TEXT_DIM} dimColor>no phone</Text>
                 )}
               </Box>
             );
@@ -322,10 +323,11 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
         )}
       </Box>
 
-      {mode === "create" && (
+      {(mode === "create" || mode === "createRole") && (
         <Box flexDirection="column" borderStyle="round" borderColor={BORDER_SUBTLE} padding={1} marginBottom={1}>
-          <Text bold color={PRIMARY}>New Dev Account</Text>
-          {FORM_FIELDS.map((f) => (
+          <Text bold color={PRIMARY}>New User</Text>
+
+          {mode === "create" && FORM_FIELDS.map((f) => (
             <Box key={f} flexDirection="column" marginTop={1}>
               <Box gap={1}>
                 <Text color={formField === f ? FOCUS : TEXT_MUTED} bold={formField === f}>
@@ -350,18 +352,41 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
               </Box>
             </Box>
           ))}
-          <Box marginTop={1}>
-            <Text color={TEXT_DIM} dimColor>[Tab/Enter] next field  [Enter on Phone] create  [Esc] cancel</Text>
-          </Box>
+
+          {mode === "createRole" && (
+            <Box flexDirection="column" marginTop={1}>
+              <Text color={PRIMARY} bold>Select role</Text>
+              <Box flexDirection="column" marginTop={1}>
+                {ROLES.map((role, i) => {
+                  const isSelected = i === newRoleCursor;
+                  return (
+                    <Box key={role} gap={2}>
+                      <Text color={isSelected ? FOCUS : TEXT_MUTED} bold={isSelected}>{isSelected ? "▶" : " "}</Text>
+                      <Text color={ROLE_COLORS[role] ?? PRIMARY} bold={isSelected}>[{role}]</Text>
+                    </Box>
+                  );
+                })}
+              </Box>
+              <Box marginTop={1}>
+                <Text color={TEXT_DIM} dimColor>[↑↓] navigate  [Enter] create  [Esc] back</Text>
+              </Box>
+            </Box>
+          )}
+
+          {mode === "create" && (
+            <Box marginTop={1}>
+              <Text color={TEXT_DIM} dimColor>[Tab/Enter] next field  [Enter on Phone] continue  [Esc] cancel</Text>
+            </Box>
+          )}
         </Box>
       )}
 
       <StatusBar
         bindings={[
-          { key: "n", label: "new dev" },
+          { key: "n", label: "new user" },
+          { key: "r", label: "change role" },
           { key: "d", label: "delete" },
           { key: "c", label: "set color" },
-          { key: "x", label: "assign roles" },
           { key: "b/Esc", label: "back" },
         ]}
         message={message}

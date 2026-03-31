@@ -9,17 +9,8 @@ export type Screen =
   | "task-detail"
   | "task-form"
   | "team-management"
-  | "role-management"
   | "settings"
   | "message-thread";
-
-export interface CustomRole {
-  id: number;
-  name: string;
-  color: string;
-  can_assign_tasks: boolean;
-  is_system: boolean;
-}
 
 export interface User {
   id: number;
@@ -28,7 +19,6 @@ export interface User {
   role: Role;
   phone?: string | null;
   chat_color?: string | null;
-  custom_roles?: CustomRole[];
   created_at: string;
 }
 
