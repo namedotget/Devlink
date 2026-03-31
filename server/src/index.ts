@@ -29,6 +29,38 @@ function renderLandingPage(): string {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Manage tasks and message team members from your terminal" />
+    <meta name="author" content="Colin M. Foster" />
+    <meta name="keywords" content="tui, terminal, project-management, ink" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="noindex, nofollow" />
+    <meta name="bingbot" content="noindex, nofollow" />
+    <meta name="yandexbot" content="noindex, nofollow" />
+    <meta name="duckduckbot" content="noindex, nofollow" />
+    <meta name="baidu" content="noindex, nofollow" />
+    <meta name="sogou" content="noindex, nofollow" />
+    <meta name="360" content="noindex, nofollow" />
+
+    <meta name="og:title" content="Devlink Server" />
+    <meta name="og:description" content="Manage tasks and message team members from your terminal" />
+    <meta name="og:url" content="https://devlink.fly.dev" />
+    <meta name="og:type" content="website" />
+    <meta name="og:locale" content="en_US" />
+    <meta name="og:site_name" content="Devlink" />
+    <meta name="og:image:width" content="1200" />
+    <meta name="og:image:height" content="630" />
+    <meta name="og:image:alt" content="Devlink Server" />
+    <meta name="og:image:type" content="image/png" />
+    <meta name="og:image:width" content="1200" />
+    <meta name="og:image:height" content="630" />
+    <meta name="og:image:alt" content="Devlink Server" /> 
+
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Devlink Server" />
+    <meta name="twitter:description" content="Manage tasks and message team members from your terminal" />
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2300D97E'/></svg>" />
     <title>Devlink Server</title>
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
