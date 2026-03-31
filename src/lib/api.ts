@@ -380,4 +380,4 @@ export {
   parseSender,
   formatOutgoing,
   isTeamChatBootstrapMessage,
-} from "./linq-utils";
+} from "./linq-utils.js";
