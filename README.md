@@ -1,4 +1,4 @@
-# DEVLINK (DEMO)
+# [DEVLINK](https://devlink.fly.dev) (DEMO)
 
 *Author: [Colin M Foster](https://namedotget.com)*
 
