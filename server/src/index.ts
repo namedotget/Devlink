@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import helmet from "helmet";
+import { randomBytes } from "node:crypto";
 import { ensureSchema } from "./lib/db.js";
 import { globalLimiter } from "./middleware/rate-limit.js";
 import { authRouter } from "./routes/auth.js";
@@ -22,7 +23,7 @@ const TITLE_BANNER = `
 ╚═════╝ ╚══════╝  ╚═══╝  ╚══════╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝
 `.trim();
 
-function renderLandingPage(): string {
+function renderLandingPage(scriptNonce: string): string {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -151,22 +152,42 @@ function renderLandingPage(): string {
         margin: 28px 0;
       }
 
-      .instructions {
+      .transcript {
         width: 100%;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
+        min-height: clamp(300px, 42vh, 340px);
       }
 
-      .instruction-line {
+      .terminal-line {
         font-size: 13px;
         color: #00A35C;
         display: flex;
         align-items: baseline;
-        gap: 10px;
+        gap: 8px;
+        line-height: 1.45;
+        min-height: 20px;
       }
 
-      .instruction-line .step {
+      .line-prompt {
+        color: #007A44;
+        white-space: nowrap;
+      }
+
+      .line-command {
+        color: #00D97E;
+      }
+
+      .line-output {
+        color: #00A35C;
+      }
+
+      .line-faint {
+        color: #007A44;
+      }
+
+      .line-index {
         color: #004D2A;
         min-width: 20px;
       }
@@ -190,6 +211,16 @@ function renderLandingPage(): string {
         animation: blink 1.1s step-end infinite;
       }
 
+      .line-cursor {
+        display: inline-block;
+        width: 8px;
+        height: 14px;
+        background: #00D97E;
+        vertical-align: text-bottom;
+        margin-left: 2px;
+        animation: blink 1.1s step-end infinite;
+      }
+
       @keyframes blink {
         0%, 100% { opacity: 1; }
         50%       { opacity: 0; }
@@ -209,29 +240,155 @@ function renderLandingPage(): string {
         <pre>${TITLE_BANNER}</pre>
         <div class="subtitle">Developer Task Dashboard</div>
         <hr class="divider" />
-        <div class="instructions">
-          <div class="instruction-line">
-            <span class="step">1.</span>
-            <span>Make sure <code>Node.js</code> is installed on your machine.</span>
-          </div>
-          <div class="instruction-line">
-            <span class="step">2.</span>
-            <span>Run <code>npx dvlnk</code> in your terminal to launch the client.<span class="cursor"></span></span>
-          </div>
-        </div>
+        <div id="terminal-transcript" class="transcript" aria-live="polite"></div>
       </div>
     </div>
+    <script nonce="${scriptNonce}">
+      (function terminalIntro() {
+        var transcriptRoot = document.getElementById("terminal-transcript");
+        if (!transcriptRoot) return;
+
+        var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var skipAnimation = window.location.search.indexOf("reduceMotion=1") !== -1 && reducedMotion;
+        var steps = [
+          { type: "command", text: "npx dvlnk", speed: 68, after: 700 },
+          { type: "output", text: "Booting Devlink TUI...", style: "line-faint", after: 450 },
+          { type: "output", text: "Connected to workspace and synced team context.", style: "line-output", after: 700 },
+          { type: "command", text: "help", speed: 62, after: 520 },
+          { type: "output", text: "Devlink is a terminal first command center for engineering teams.", style: "line-output", after: 780 },
+          { type: "output", text: "Plan tasks, track ownership, and collaborate without leaving your shell.", style: "line-output", after: 780 },
+          { type: "command", text: "status", speed: 54, after: 560 },
+          { type: "output", text: "Everything important. One screen. No context switching.", style: "line-faint", after: 760 },
+          { type: "command", text: "sync", speed: 58, after: 620 },
+          { type: "output", text: "Team updates aligned in real time.", style: "line-output", after: 760 },
+          { type: "command", text: "run", speed: 62, after: 420 },
+          { type: "output", text: "Efficient. Intuitive. Developer-first.", style: "line-output", after: 0 }
+        ];
+
+        function createLine(type, text, lineClass) {
+          var line = document.createElement("div");
+          line.className = "terminal-line";
+
+          if (type === "command") {
+            var prompt = document.createElement("span");
+            prompt.className = "line-prompt";
+            prompt.textContent = "devlink ~";
+            line.appendChild(prompt);
+
+            var command = document.createElement("span");
+            command.className = "line-command";
+            command.textContent = text;
+            line.appendChild(command);
+            return line;
+          }
+
+          var index = document.createElement("span");
+          index.className = "line-index";
+          index.textContent = ">";
+          line.appendChild(index);
+
+          var output = document.createElement("span");
+          output.className = lineClass || "line-output";
+          output.textContent = text;
+          line.appendChild(output);
+          return line;
+        }
+
+        function appendStaticLine(step) {
+          transcriptRoot.appendChild(createLine(step.type, step.text, step.style));
+        }
+
+        if (skipAnimation) {
+          for (var i = 0; i < steps.length; i += 1) appendStaticLine(steps[i]);
+          var reducedCursor = document.createElement("span");
+          reducedCursor.className = "line-cursor";
+          transcriptRoot.lastElementChild && transcriptRoot.lastElementChild.appendChild(reducedCursor);
+          return;
+        }
+
+        var activeCursor = document.createElement("span");
+        activeCursor.className = "line-cursor";
+        var currentStep = 0;
+
+        function typeCommand(step, done) {
+          var line = createLine("command", "", "");
+          var commandNode = line.querySelector(".line-command");
+          if (!commandNode) {
+            done();
+            return;
+          }
+
+          transcriptRoot.appendChild(line);
+          commandNode.appendChild(activeCursor);
+          var index = 0;
+          var speed = step.speed || 58;
+
+          function tick() {
+            if (index < step.text.length) {
+              commandNode.insertBefore(document.createTextNode(step.text.charAt(index)), activeCursor);
+              index += 1;
+              window.setTimeout(tick, speed);
+              return;
+            }
+            done();
+          }
+
+          tick();
+        }
+
+        function showOutput(step, done) {
+          var line = createLine("output", step.text, step.style);
+          transcriptRoot.appendChild(line);
+          line.appendChild(activeCursor);
+          done();
+        }
+
+        function runNextStep() {
+          var step = steps[currentStep];
+          if (!step) return;
+
+          var onComplete = function () {
+            currentStep += 1;
+            window.setTimeout(runNextStep, step.after || 0);
+          };
+
+          if (step.type === "command") {
+            typeCommand(step, onComplete);
+            return;
+          }
+
+          showOutput(step, onComplete);
+        }
+
+        runNextStep();
+      })();
+    </script>
   </body>
 </html>`;
 }
 
 app.set("trust proxy", 1);
-app.use(helmet());
+app.use((_req, res, next) => {
+  res.locals["cspNonce"] = randomBytes(16).toString("base64");
+  next();
+});
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        scriptSrc: [
+          "'self'",
+          (_req, res: any) => `'nonce-${res.locals["cspNonce"]}'`,
+        ],
+      },
+    },
+  }),
+);
 app.use(express.json());
 app.use(globalLimiter);
 
 app.get("/", (_req, res) => {
-  res.type("html").send(renderLandingPage());
+  res.type("html").send(renderLandingPage(res.locals["cspNonce"]));
 });
 
 app.use("/auth", authRouter);
