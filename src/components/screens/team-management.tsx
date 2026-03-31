@@ -171,7 +171,7 @@ export function TeamManagement({ onBack }: TeamManagementProps) {
 
       if (key.escape || input === "b") { onBack(); return; }
       if (key.upArrow) { setCursor((c) => Math.max(0, c - 1)); return; }
-      if (key.downArrow) { setCursor((c) => Math.min(users.length - 1, c + 1)); return; }
+      if (key.downArrow) { setCursor((c) => Math.min(Math.max(0, users.length - 1), c + 1)); return; }
 
       if (input === "n") {
         setMode("create");
