@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getAllTasks, getTasksByAssignee, getTaskById, createTask, updateTask, deleteTask } from "../lib/tasks.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import type { TaskStatus, TaskPriority } from "../types.js";
+import { statusCodeFromError } from "../lib/errors.js";
 
 export const tasksRouter = Router();
 
@@ -39,15 +40,19 @@ tasksRouter.post("/", async (req: AuthRequest, res) => {
     return;
   }
 
-  const task = await createTask({
-    title,
-    description: description ?? "",
-    status,
-    priority,
-    created_by: req.userId!,
-    assigned_to: assigned_to ?? null,
-  });
-  res.status(201).json(task);
+  try {
+    const task = await createTask({
+      title,
+      description: description ?? "",
+      status,
+      priority,
+      created_by: req.userId!,
+      assigned_to: assigned_to ?? null,
+    });
+    res.status(201).json(task);
+  } catch (err) {
+    res.status(statusCodeFromError(err)).json({ error: (err as Error).message });
+  }
 });
 
 tasksRouter.patch("/:id", async (req: AuthRequest, res) => {
@@ -71,7 +76,7 @@ tasksRouter.patch("/:id", async (req: AuthRequest, res) => {
     const task = await updateTask(id, { title, description: description ?? "", status, priority, assigned_to: assigned_to ?? null }, req.userId!);
     res.json(task);
   } catch (err) {
-    res.status(400).json({ error: (err as Error).message });
+    res.status(statusCodeFromError(err)).json({ error: (err as Error).message });
   }
 });
 

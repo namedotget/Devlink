@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { sql } from "./db.js";
 import type { User, Role } from "../types.js";
+import { createAppError } from "./errors.js";
 
 function rowToUser(row: Record<string, unknown>): User {
   return {
@@ -52,15 +53,47 @@ export async function createUser(
   return rowToUser(rows[0]);
 }
 
-export async function updateUserPhone(userId: number, phone: string | null): Promise<void> {
+function canEditUserData(actorUserId: number, actorRole: Role, targetUserId: number): boolean {
+  if (actorRole === "manager") return true;
+  return actorUserId === targetUserId;
+}
+
+export async function updateUserPhone(
+  userId: number,
+  phone: string | null,
+  actorUserId: number,
+  actorRole: Role
+): Promise<void> {
+  if (!canEditUserData(actorUserId, actorRole, userId)) {
+    throw createAppError("FORBIDDEN", "Leads and devs can only edit their own user data.");
+  }
   await sql`UPDATE users SET phone = ${phone} WHERE id = ${userId}`;
 }
 
-export async function updateUserChatColor(userId: number, color: string | null): Promise<void> {
+export async function updateUserChatColor(
+  userId: number,
+  color: string | null,
+  actorUserId: number,
+  actorRole: Role
+): Promise<void> {
+  if (!canEditUserData(actorUserId, actorRole, userId)) {
+    throw createAppError("FORBIDDEN", "Leads and devs can only edit their own user data.");
+  }
   await sql`UPDATE users SET chat_color = ${color} WHERE id = ${userId}`;
 }
 
-export async function updateUserRole(userId: number, role: Role): Promise<void> {
+export async function updateUserRole(
+  userId: number,
+  role: Role,
+  actorUserId: number,
+  actorRole: Role
+): Promise<void> {
+  if (!canEditUserData(actorUserId, actorRole, userId)) {
+    throw createAppError("FORBIDDEN", "Leads and devs can only edit their own user data.");
+  }
+  if (actorRole !== "manager") {
+    throw createAppError("FORBIDDEN", "Only managers can change roles.");
+  }
   await sql`UPDATE users SET role = ${role} WHERE id = ${userId}`;
 }
 

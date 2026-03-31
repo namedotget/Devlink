@@ -2,6 +2,7 @@ import { sql } from "./db.js";
 import type { Task, TaskStatus, TaskPriority, User } from "../types.js";
 import { canUserTransitionTaskStatus } from "./task-status.js";
 import { getUserById } from "./users.js";
+import { createAppError } from "./errors.js";
 
 export function canAssignTasks(user: User): boolean {
   return user.role === "manager" || user.role === "lead";
@@ -79,6 +80,14 @@ export async function createTask(data: {
   created_by: number;
   assigned_to: number | null;
 }): Promise<Task> {
+  const actor = await getUserById(data.created_by);
+  if (!actor) {
+    throw createAppError("NOT_FOUND", "Actor not found.");
+  }
+  if (actor.role !== "manager" && actor.role !== "lead") {
+    throw createAppError("FORBIDDEN", "Only managers and leads can create tasks.");
+  }
+
   const rows = await sql`
     INSERT INTO tasks (title, description, status, priority, created_by, assigned_to)
     VALUES (${data.title}, ${data.description}, ${data.status}, ${data.priority}, ${data.created_by}, ${data.assigned_to})
@@ -101,12 +110,12 @@ export async function updateTask(
 ): Promise<Task> {
   const previousTask = await getTaskById(id);
   if (!previousTask) {
-    throw new Error("Task not found.");
+    throw createAppError("NOT_FOUND", "Task not found.");
   }
   if (previousTask.status !== data.status) {
     const actor = await getUserById(actorUserId);
     if (!actor) {
-      throw new Error("Actor not found.");
+      throw createAppError("NOT_FOUND", "Actor not found.");
     }
     const transition = canUserTransitionTaskStatus({
       user: actor,
@@ -114,7 +123,7 @@ export async function updateTask(
       targetStatus: data.status,
     });
     if (!transition.allowed) {
-      throw new Error(transition.reason ?? "Status transition is not allowed.");
+      throw createAppError("FORBIDDEN", transition.reason ?? "Status transition is not allowed.");
     }
   }
 
