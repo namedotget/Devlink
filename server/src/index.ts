@@ -187,6 +187,19 @@ function renderLandingPage(scriptNonce: string): string {
         color: #007A44;
       }
 
+      .line-link {
+        color: #3cf8a5;
+        text-decoration: none;
+        border-bottom: 1px dotted #007A44;
+      }
+
+      .line-link:hover,
+      .line-link:focus-visible {
+        color: #7fffc4;
+        border-bottom-color: #00D97E;
+        text-shadow: 0 0 8px rgba(0, 217, 126, 0.45);
+      }
+
       .line-index {
         color: #004D2A;
         min-width: 20px;
@@ -262,7 +275,14 @@ function renderLandingPage(scriptNonce: string): string {
           { type: "command", text: "sync", speed: 58, after: 620 },
           { type: "output", text: "Team updates aligned in real time.", style: "line-output", after: 760 },
           { type: "command", text: "run", speed: 62, after: 420 },
-          { type: "output", text: "Efficient. Intuitive. Developer-first.", style: "line-output", after: 0 }
+          { type: "output", text: "Efficient. Intuitive. Developer-first.", style: "line-output", after: 540 },
+          {
+            type: "link",
+            text: "npm package",
+            label: "npmjs.com/package/dvlnk",
+            href: "https://www.npmjs.com/package/dvlnk",
+            after: 0
+          }
         ];
 
         function createLine(type, text, lineClass) {
@@ -287,6 +307,17 @@ function renderLandingPage(scriptNonce: string): string {
           index.textContent = ">";
           line.appendChild(index);
 
+          if (type === "link") {
+            var link = document.createElement("a");
+            link.className = "line-link";
+            link.href = lineClass || "#";
+            link.target = "_blank";
+            link.rel = "noreferrer noopener";
+            link.textContent = text;
+            line.appendChild(link);
+            return line;
+          }
+
           var output = document.createElement("span");
           output.className = lineClass || "line-output";
           output.textContent = text;
@@ -295,6 +326,10 @@ function renderLandingPage(scriptNonce: string): string {
         }
 
         function appendStaticLine(step) {
+          if (step.type === "link") {
+            transcriptRoot.appendChild(createLine("link", step.text + " " + (step.label || ""), step.href));
+            return;
+          }
           transcriptRoot.appendChild(createLine(step.type, step.text, step.style));
         }
 
@@ -337,7 +372,9 @@ function renderLandingPage(scriptNonce: string): string {
         }
 
         function showOutput(step, done) {
-          var line = createLine("output", step.text, step.style);
+          var line = step.type === "link"
+            ? createLine("link", step.text + " " + (step.label || ""), step.href)
+            : createLine("output", step.text, step.style);
           transcriptRoot.appendChild(line);
           line.appendChild(activeCursor);
           done();
