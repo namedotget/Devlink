@@ -33,11 +33,24 @@ All devs welcome! If you'd like to help improve this project please submit a PR 
 Go to [neon.tech](https://neon.tech) and create an account or login.
 
 Create a new project, click the 'Overview' tab on the left side and then click the 'Connect' button.
+
 Copy and paste the db url into .env 
+
+1. Setup Database
+```bash
+npx tsx scripts/setup-db.ts
+```
+
+2. Create your first account
+```bash
+npx tsx scripts/create-user.ts --username=<name> --email=<email> --password=<pass> --role=manager
+```
 
 ### Linq
 Go to [linqapp.com](https://linqapp.com) and request access to the Sandbox.
 Paste your Linq api key and virtual number into .env
+
+The team chat will be tied to virtual number, anytime someone sends a chat and has their mobile number connected it will be routed through the virtual number.
 
 ### Groq (coming soon...)
 Working on adding AI features, the server has a route for ai chat but it isn't hooked up to the frontend.

@@ -1,7 +1,7 @@
 {
   "name": "dvlnk",
   "author": "Colin M. Foster",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Manage tasks and message team members from your terminal",
   "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
