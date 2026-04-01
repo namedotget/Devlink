@@ -160,6 +160,13 @@ function renderLandingPage(scriptNonce: string): string {
         min-height: clamp(300px, 42vh, 340px);
       }
 
+      .footer {
+        margin-top: 18px;
+        font-size: 10px;
+        color: #004D2A;
+        letter-spacing: 0.04em;
+      }
+
       .terminal-line {
         font-size: 13px;
         color: #00A35C;
@@ -254,6 +261,7 @@ function renderLandingPage(scriptNonce: string): string {
         <div class="subtitle">Developer Task Dashboard</div>
         <hr class="divider" />
         <div id="terminal-transcript" class="transcript" aria-live="polite"></div>
+        <div class="footer">Copyright © Colin M Foster</div>
       </div>
     </div>
     <script nonce="${scriptNonce}">
