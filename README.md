@@ -17,6 +17,10 @@ All from your terminal.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+![Login](devlink-1.png)
+
+![Dashboard](devlink-2.png)
+
 # Features
 - Task dashboard
 - Task view where you can like and comment
